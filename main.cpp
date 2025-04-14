@@ -149,9 +149,9 @@ int main(int, char** argv)
   
 
     ImGui_ImplWin32_EnableDpiAwareness();
-    WNDCLASSEXW wc = { sizeof(wc), CS_OWNDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"XHASH 0.1 OpenGL3.3", nullptr };
+    WNDCLASSEXW wc = { sizeof(wc), CS_OWNDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr, L"XHASH 0.5 OpenGL3.3", nullptr };
     ::RegisterClassExW(&wc);
-    HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"XHASH 0.1 OpenGL3.3", WS_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW | WS_EX_NOPARENTNOTIFY, 100, 80, 500, 300, nullptr, nullptr, wc.hInstance, nullptr);
+    HWND hwnd = ::CreateWindowW(wc.lpszClassName, L"XHASH 0.5 OpenGL3.3", WS_OVERLAPPEDWINDOW | WS_EX_TOOLWINDOW | WS_EX_NOPARENTNOTIFY, 100, 80, 500, 300, nullptr, nullptr, wc.hInstance, nullptr);
     ::SetWindowLongA(hwnd, GWL_STYLE, GetWindowLong(hwnd, GWL_STYLE) & ~WS_SIZEBOX);
     // Initialize OpenGL
    // AGPU->hwnd = hwnd;
@@ -183,6 +183,7 @@ int main(int, char** argv)
     ImGui_ImplWin32_InitForOpenGL(hwnd);
     ImGui_ImplOpenGL3_Init();
     io.Fonts->AddFontFromFileTTF(".\\Bounded-Regular.ttf", 20.0f);//
+    ImFont* font15 = io.Fonts->AddFontFromFileTTF(".\\Bounded-Regular.ttf", 15.0f);
     ImFont* font40 = io.Fonts->AddFontFromFileTTF(".\\Bounded-Regular.ttf", 40.0f);
     ImFont* font60 = io.Fonts->AddFontFromFileTTF(".\\Bounded-Regular.ttf", 60.0f);
     int CPUInfo[4] = { -1 };
@@ -277,6 +278,8 @@ int main(int, char** argv)
         style.Colors[ImGuiCol_PlotHistogram] = ImVec4(0.90f, 0.70f, 0.00f, 1.00f);
         style.Colors[ImGuiCol_PlotHistogramHovered] = ImVec4(1.00f, 0.60f, 0.00f, 1.00f);
         style.Colors[ImGuiCol_TextSelectedBg] = ImVec4(0.00f, 0.00f, 1.00f, 0.35f);
+        style.WindowBorderSize = 1.0f;
+        style.FrameBorderSize = 1.0f;
         ImGuiButtonFlags btn_flags = ImGuiButtonFlags_MouseButtonMask_;
 
 
@@ -295,9 +298,24 @@ int main(int, char** argv)
         XHASHA->XHASHWindowSize(490, 290);
         XHASHA->XHASHWindowPos(0, 0);
         if (XHASHA->fXHGenerateWindowBool) {
-            XHASHA->XHASHCursorPos(220, 50);
-            ImGui::Spinner("load", 20, 2, ImGui::GetColorU32(ImVec4(ImVec4(0.40f, 0, 1.0f, 1.0f))));
-            XHASHA->generate(XHASHA->fXMaxHashSize, &XHASHA->fXHGenerateWindowBool, &XHASHA->fXHASHOutGen);
+            XHASHA->XHASHCursorPos(220, 10);
+           // ImGui::Spinner("load", 20, 2, ImGui::GetColorU32(ImVec4(ImVec4(0.40f, 0, 1.0f, 1.0f))));
+            if (XHASHA->MethodHash == "sha256") {
+                XHASHA->XHASHSha256Gen(XHASHA->fXHChars, &XHASHA->fXHASHOutGen);
+            }
+            else if (XHASHA->MethodHash == "xhash") {
+                XHASHA->generate(XHASHA->fXMaxHashSize, &XHASHA->fXHGenerateWindowBool, &XHASHA->fXHASHOutGen);
+            }
+        }
+        if (XHASHA->fXHASHAbout) {
+            //https://github.com/System-Glitch/SHA256
+            ImGui::Begin("XHASH::ABOUT", &XHASHA->fXHASHAbout);
+            ImGui::PushFont(font15);//11ffdf
+            ImGui::TextColored(XHASHA->RGBA2IV4(255, 0, 50, 255), "THANKS!!");
+            ImGui::TextColored(XHASHA->RGBA2IV4(0, 255, 50, 255), "SHA - 256: https://github.com/System-Glitch/SHA256");
+            ImGui::TextColored(XHASHA->RGBA2IV4(11, 255, 140, 255), "XHASH 0.5 (C++20)_windows_amd64 by HCPP");
+            ImGui::PopFont();
+            ImGui::End();
         }
         if (XHASHA->fXHSaveFileWindowBool) {
             ImGui::Begin("Save File", &XHASHA->fXHSaveFileWindowBool);
@@ -308,12 +326,31 @@ int main(int, char** argv)
             ImGui::End();
         }
         ImGui::Text(("XHASH:" + std::to_string(XHASHA->fXHASHOutGen.size())+"/"+std::to_string(XHASHA->fXMaxHashSize)).c_str());
-        XHASHA->XHASHCursorPos(40, 110);
+        XHASHA->XHASHCursorPos(40, 30);
         ImGui::TextColored(XHASHA->RGBA2IV4(140,0,255,255), "XHASH - POWERFUL HASH GENERATOR");
-        ImGui::InputText("char", &XHASHA->fXHChars, ImGuiInputTextFlags_CharsUppercase);
-        ImGui::InputInt("size", &XHASHA->fXMaxHashSize, 1); ImGui::SameLine(); XHASHA->XHASHButton("GENERATE", &XHASHA->fXHGenerateWindowBool);
-        
-        XHASHA->XHASHButton("SAVE .txt", &XHASHA->fXHSaveFileWindowBool); ImGui::SameLine(); if (ImGui::Button("EXIT")) { exit(0); }
+        if (ImGui::Button("sha256")) {       
+            XHASHA->MethodHash = "sha256";
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Rand Hash")) {
+            XHASHA->MethodHash = "xhash";
+        }
+        ImGui::PushItemWidth(200.0f);
+        if (XHASHA->MethodHash != "sha256") {
+            ImGui::Text("SYMBOLS TO GEN");
+        }
+        else {
+            ImGui::Text("TEXT");
+        }
+        ImGui::InputText("c", &XHASHA->fXHChars, ImGuiInputTextFlags_CharsUppercase);
+        ImGui::PopItemWidth();
+            ImGui::PushItemWidth(130.0f);
+            if (XHASHA->MethodHash != "sha256") {
+            ImGui::Text("SIZE HASH");
+            ImGui::InputInt("size", &XHASHA->fXMaxHashSize, 0);
+        }  XHASHA->XHASHButton("GENERATE", &XHASHA->fXHGenerateWindowBool); ImGui::SameLine();
+        ImGui::PopItemWidth();
+        XHASHA->XHASHButton("SAVE .txt", &XHASHA->fXHSaveFileWindowBool); ImGui::SameLine(); if (ImGui::Button("ABOUT")) { XHASHA->fXHASHAbout = true; } ImGui::SameLine(); if (ImGui::Button("EXIT")) { exit(0); }
         ImGui::Text((XHASHA->strData).c_str());
          ImGui::End();
 // Rendering
